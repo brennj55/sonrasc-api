@@ -4,7 +4,8 @@ var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
-var fs = require('fs');
+
+var processing = require('./src/process-images.js');
 
 server.listen(9005, () => {
   console.log("Listening on port 9005 for data..!!.");
@@ -13,35 +14,13 @@ server.listen(9005, () => {
 io.on('connection', (socket) => {
   console.log("User connected.");
 
-  socket.on('image-cropping', processImage);
-});
-
-let processImage = (imageFromUser) => {
-  var image = imageFromUser.imageData;
-  var regex = /^data:.+\/(.+);base64,(.*)$/;
-  var matches = image.match(regex);
-  var ext = matches[1];
-  var data = matches[2];
-  var buffer = new Buffer(data, 'base64');
-  fs.writeFile('images/data.jpg', buffer, () => {
-    var files = fs.readdirSync('images');
-    console.log(files);
-    fs.stat('images/data.jpg', (err, stat) => {
-      if (err === null) {
-        console.log('file is here...!');
-      }
+  socket.on('image-cropping', (imgData) => {
+    processing.extractText(imgData).then(data => {
+      socket.emit('extracted text', data);
     });
   });
-};
+});
 
 app.get('/data', function (req, res) {
-  var files = fs.readdirSync('.');
-  console.log(files);
-  console.log(__dirname);
-  fs.stat('images/data.jpg', (err, stat) => {
-    if (err === null) {
-      console.log('file is here...!');
-    }
-  });
   res.sendFile("/src/images/data.jpg");
 });
