@@ -1,11 +1,9 @@
-'use strict';
-
 var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
-var processing = require('./src/process-images.js');
+var processing = require('./process-images.js');
 
 server.listen(9005, () => {
   console.log("Listening on port 9005 for data...");
