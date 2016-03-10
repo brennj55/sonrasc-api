@@ -5,17 +5,18 @@ var Q = require('q');
 var request = Q.denodeify(require('request'));
 var fsWriteFile = Q.denodeify(fs.writeFile)
 
+const REQUEST_TO_OCR_API = {
+  method: 'POST',
+  url: 'http://192.168.99.100:9292/ocr',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: "{  \"img_url\": \"http://192.168.99.100:9005/data\",  \"engine\": \"tesseract\"}"
+};
+
 let getImageContents = () => {
   var deferred = Q.defer();
-  var data = {"img_url":"http://192.168.99.100:9005/data", "engine":"tesseract"};
-  request({
-    method: 'POST',
-    url: 'http://192.168.99.100:9292/ocr',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: "{  \"img_url\": \"http://192.168.99.100:9005/data\",  \"engine\": \"tesseract\"}"
-  }, (err, res, body) => {
+  request(REQUEST_TO_OCR_API, (err, res, body) => {
     deferred.resolve(body);
   });
   return deferred.promise;

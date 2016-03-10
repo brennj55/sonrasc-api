@@ -9,16 +9,17 @@ server.listen(9005, () => {
   console.log("Listening on port 9005 for data...");
 });
 
+const getContents = (imgData, socket) => {
+    processing.extractText(imgData).then(data => {
+      socket.emit('extracted-text', data);
+    }
+  );
+};
+
 io.on('connection', (socket) => {
   console.log("User connected.");
 
   socket.on('image-cropping', imgData => {
-    processing.extractText(imgData).then(data => {
-      socket.emit('extracted-text', data);
-    });
+      getContents(imgData, socket);
   });
-});
-
-app.get('/data', function (req, res) {
-  res.sendFile("/src/images/data.jpg");
 });

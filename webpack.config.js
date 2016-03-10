@@ -24,9 +24,9 @@ module.exports = [
     filename: './build/bundle.js',
     sourceMapFilename: 'bundle.map'
   },
-  plugins: [
-    new webpack.HotModuleReplacementPlugin()
-  ],
+  // plugins: [
+  //   new webpack.HotModuleReplacementPlugin()
+  // ],
   externals: nodeModules,
   devtool: 'eval-source-map',
   module: {
