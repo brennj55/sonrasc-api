@@ -18,8 +18,11 @@ const getContents = (imgData, socket) => {
 
 io.on('connection', (socket) => {
   console.log("User connected.");
-
   socket.on('image-cropping', imgData => {
       getContents(imgData, socket);
   });
+});
+
+app.get('/data', function (req, res) {
+  res.sendFile("/src/images/data.jpg");
 });
