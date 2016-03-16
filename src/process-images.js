@@ -1,22 +1,22 @@
 'use strict';
 var fs = require('fs');
 var Q = require('q');
+var fetch = require('node-fetch');
 
 var request = Q.denodeify(require('request'));
 var fsWriteFile = Q.denodeify(fs.writeFile)
 
-const REQUEST_TO_OCR_API = {
-  method: 'POST',
-  url: 'http://192.168.99.100:9292/ocr',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: "{  \"img_url\": \"http://192.168.99.100:9005/data\",  \"engine\": \"tesseract\"}"
-};
-
 let getImageContents = () => {
   var deferred = Q.defer();
-  request(REQUEST_TO_OCR_API, (err, res, body) => {
+  var data = {"img_url":"http://192.168.99.100:9005/data", "engine":"tesseract"};
+  request({
+    method: 'POST',
+    url: 'http://192.168.99.100:9292/ocr',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: "{  \"img_url\": \"http://192.168.99.100:9005/data\",  \"engine\": \"tesseract\"}"
+  }, (err, res, body) => {
     deferred.resolve(body);
   });
   return deferred.promise;
@@ -32,8 +32,28 @@ let processImage = (imageFromUser) => {
   return fsWriteFile('images/data.jpg', buffer);
 };
 
+let createPOSTObject = (type, data) => {
+  let trimmedData = data.trim();
+  let dataObject = JSON.stringify({type: type, data: trimmedData});
+  let url = 'http://192.168.99.100:9080/' + type;
+  let toSend = {
+    method: 'POST',
+    body: dataObject,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+  return {url, toSend};
+};
+
+let extractDataObject = (type, data) => {
+  let httpPOST = createPOSTObject(type, data);
+  return fetch(httpPOST.url, httpPOST.toSend)
+    .then(res => res.json()).then(json => json.answer);
+};
+
 let extractText = (imageData) => processImage(imageData)
-  .then(getImageContents);
+  .then(getImageContents).then(data => extractDataObject(imageData.cropType, data));
 
 module.exports = {
   extractText: extractText
