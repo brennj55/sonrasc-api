@@ -34,7 +34,8 @@ let processImage = (imageFromUser) => {
 
 let createPOSTObject = (type, data) => {
   let trimmedData = data.trim();
-  let dataObject = JSON.stringify({type: type, data: trimmedData});
+  let objectType = type.toLowerCase();
+  let dataObject = JSON.stringify({type: objectType, data: trimmedData});
   let url = 'http://192.168.99.100:9080/' + type;
   let toSend = {
     method: 'POST',
