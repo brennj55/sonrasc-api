@@ -1,0 +1,1 @@
+Ensures this folder is created to store temporary images to process via OCR.

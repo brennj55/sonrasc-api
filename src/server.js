@@ -6,7 +6,7 @@ var io = require('socket.io')(server);
 var processing = require('./process-images.js');
 
 server.listen(9005, () => {
-  console.log("Listening on port 9005 for data...");
+  console.log("Listening on port 9005 for data..!");
 });
 
 const getContents = (imgData, socket) => {
@@ -19,6 +19,7 @@ const getContents = (imgData, socket) => {
 io.on('connection', (socket) => {
   console.log("User connected.");
   socket.on('image-cropping', imgData => {
+    console.log("Extracting contents of image...");
     getContents(imgData, socket);
   });
 });

@@ -29,6 +29,7 @@ let processImage = (imageFromUser) => {
   var ext = matches[1];
   var data = matches[2];
   var buffer = new Buffer(data, 'base64');
+  console.log("Writing image...");
   return fsWriteFile('images/data.jpg', buffer);
 };
 
