@@ -24,6 +24,4 @@ io.on('connection', (socket) => {
   });
 });
 
-app.get('/data', function (req, res) {
-  res.sendFile("/src/images/data.jpg");
-});
+app.get('/data', (req, res) => res.sendFile("/src/images/data.jpg"));

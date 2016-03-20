@@ -1,21 +1,26 @@
 'use strict';
 var fs = require('fs');
 var Q = require('q');
+var ip = require('ip');
 var fetch = require('node-fetch');
-
 var request = Q.denodeify(require('request'));
-var fsWriteFile = Q.denodeify(fs.writeFile)
+var fsWriteFile = Q.denodeify(fs.writeFile);
+
+const OPEN_OCR_IP = 'http://openocr:' + process.env.OPENOCR_1_PORT_9292_TCP_PORT +'/ocr';
+const LANGUAGE_PROCESSING_IP = 'http://language-processing:' + process.env.LANGUAGE_PROCESSING_1_PORT_9080_TCP_PORT + '/';
 
 let getImageContents = () => {
   var deferred = Q.defer();
-  var data = {"img_url":"http://192.168.99.100:9005/data", "engine":"tesseract"};
+  var IP_ADDRESS = "http://" + ip.address() + ":9005/data";
+  var data = {img_url: IP_ADDRESS, engine:"tesseract"};
+
   request({
     method: 'POST',
-    url: 'http://192.168.99.100:9292/ocr',
+    url: OPEN_OCR_IP,
     headers: {
       'Content-Type': 'application/json'
     },
-    body: "{  \"img_url\": \"http://192.168.99.100:9005/data\",  \"engine\": \"tesseract\"}"
+    body: JSON.stringify(data)
   }, (err, res, body) => {
     deferred.resolve(body);
   });
@@ -37,7 +42,7 @@ let createPOSTObject = (type, data) => {
   let trimmedData = data.trim();
   let objectType = type.toLowerCase();
   let dataObject = JSON.stringify({type: objectType, data: trimmedData});
-  let url = 'http://192.168.99.100:9080/' + type;
+  let url = LANGUAGE_PROCESSING_IP + type;
   let toSend = {
     method: 'POST',
     body: dataObject,
