@@ -60,8 +60,9 @@ let extractDataObject = (type, data) => {
 };
 
 let extractText = (imageData) => processImage(imageData)
-  .then(getImageContents).then(data => extractDataObject(imageData.cropType, data));
+  .then(getImageContents)
+  .then(data => extractDataObject(imageData.cropType, data));
 
 module.exports = {
-  extractText: extractText
+  extractText
 };
