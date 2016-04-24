@@ -3,8 +3,7 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 let fileID = 0;
-
-let bcrypt = require('bcrypt-nodejs');
+import Image from './utils/Image';
 
 import InvoiceExtraction from './invoice-extraction/InvoiceExtraction';
 
@@ -16,7 +15,7 @@ var processing = require('./process-images.js');
 let router = express.Router();
 
 app.use(function(req, res, next) {
-  //res.header('Access-Control-Allow-Origin', "http://192.168.99.100:8080");
+  res.header('Access-Control-Allow-Origin', "*");
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
   res.header("Access-Control-Allow-Headers", "Content-type,Accept,X-Custom-Header");
   if ('OPTIONS' == req.method) {
@@ -35,16 +34,16 @@ server.listen(9005, () => {
 
 const getContents = (imgData, socket) => {
     fileID += 1;
-    processing.extractText(imgData, fileID).then(data => {
+    let currentFileID = fileID;
+    processing.extractText(imgData, currentFileID).then(data => {
       socket.emit('extracted-text', data);
     }
-  );
+  ).then(() => Image.deleteFile(currentFileID));
 };
 
 io.on('connection', (socket) => {
   console.log("User connected.");
   socket.on('image-cropping', imgData => {
-    console.log("Extracting contents of image...");
     getContents(imgData, socket);
   });
 });

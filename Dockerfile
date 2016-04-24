@@ -1,5 +1,6 @@
 FROM node:5.4.1
 
+RUN apt-get install imagemagick
 ADD package.json /tmp/package.json
 RUN npm set progress=false
 RUN cd /tmp && npm install
