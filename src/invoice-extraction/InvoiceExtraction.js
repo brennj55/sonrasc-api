@@ -17,7 +17,8 @@ const extractInfoFromInvoice = (req, res) => {
     .then(() => extractAllCroppedImages(objectsToExtract))
     .then((data) => assoicateExtractedDataWithObjects(data, objectsToExtract))
     .then(x => groupBy(x, 'type'))
-    .then(ys => getFrequentCroppings(ys));
+    .then(ys => getFrequentCroppings(ys))
+    .then(z => console.log(z));
 
   //for each boundary
     //cut the image and send to processing server.
@@ -103,10 +104,11 @@ function assoicateExtractedDataWithObjects(data, objs) {
 }
 
 function getFrequentCroppings(data) {
-  let keys = keys(data);
-  let counts = map(data, x => countBy(x, 'text'));
-  // console.log(keys, counts);
-  console.log(counts);
+  let counts = map(data, (values, key) => {
+    let count = countBy(values, 'text');
+    return { type: key, counts: count };
+  });
+  return counts;
 }
 
 export default { extractInfoFromInvoice };
