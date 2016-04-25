@@ -1,6 +1,9 @@
 let bcrypt = require('bcrypt-nodejs');
 let ImgCrop = require('easyimage');
 import Image from '../utils/Image';
+const Q = require('q');
+import { isEmpty, zipWith, zipObject,
+  groupBy, countBy, map, keys } from 'lodash';
 
 const extractInfoFromInvoice = (req, res) => {
   let filename = getHashedFileName();
@@ -9,16 +12,13 @@ const extractInfoFromInvoice = (req, res) => {
 
   const objectsToExtract = getBoundaryDataFromInvoices(req.body.invoices);
 
-  // Image.saveBlobAsImage(imageData, filename)
-  //   .then(() => cropImage(filename, outputFilename, date.boundary))
-  //   .then(() => Image.getImageContents(outputFilename))
-  //   .then(data => console.log(data, data.length));
+  Image.saveBlobAsImage(imageData, filename)
+    .then(() => cropAllImageParts(objectsToExtract, filename))
+    .then(() => extractAllCroppedImages(objectsToExtract))
+    .then((data) => assoicateExtractedDataWithObjects(data, objectsToExtract))
+    .then(x => groupBy(x, 'type'))
+    .then(ys => getFrequentCroppings(ys));
 
-
-  //Image.saveBlobAsImage(imageData, filename).then();
-  //set up boundaries
-    //one for data
-    //put all in a set.
   //for each boundary
     //cut the image and send to processing server.
     //check the text.
@@ -50,8 +50,63 @@ const cropImage = (sourceFileName, outputFilename, boundary) => {
 };
 
 
+//get this directly from the db instead?
 const getBoundaryDataFromInvoices = (invoices) => {
-  console.log(invoices);
+  let types = ['Name', 'Price', 'Quantity'];
+  let boundaryObjects = [];
+  invoices.map(invoice => {
+    let dateBoundary = {
+      type: 'date',
+      boundary: getBoundaryObject(invoice.date.boundary),
+      filename: getHashedFileName()
+    };
+
+    boundaryObjects.push(dateBoundary);
+    invoice.items.map((item, index) => {
+
+      types.map(type => boundaryObjects.push({
+        type: 'item/' + index + '/' + type.toLowerCase(),
+        boundary: getBoundaryObject(item[type].boundary),
+        filename: getHashedFileName()
+      }));
+
+    });
+  });
+  boundaryObjects = boundaryObjects.filter(object => !isEmpty(object.boundary));
+  return boundaryObjects;
+}
+
+const getBoundaryObject = (boundary) => {
+  if (!boundary) return {};
+  return {
+    top: boundary.top,
+    left: boundary.left,
+    width: boundary.width,
+    height: boundary.height
+  };
+}
+
+function cropAllImageParts(arr, filename) {
+  var promises = arr.map((el) => cropImage(filename, el.filename, el.boundary));
+  return Q.all(promises);
+}
+
+function extractAllCroppedImages(arr) {
+  var promises = arr.map((obj) => Image.getImageContents(obj.filename));
+  return Q.all(promises);
+}
+
+function assoicateExtractedDataWithObjects(data, objs) {
+  return zipWith(data, objs, (text, obj) => {
+    return Object.assign({}, obj, { text });
+  });
+}
+
+function getFrequentCroppings(data) {
+  let keys = keys(data);
+  let counts = map(data, x => countBy(x, 'text'));
+  // console.log(keys, counts);
+  console.log(counts);
 }
 
 export default { extractInfoFromInvoice };

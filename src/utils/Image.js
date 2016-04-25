@@ -26,7 +26,7 @@ const getImageContents = (id) => {
   const OPEN_OCR_IP = 'http://openocr:' + process.env.OPENOCR_1_PORT_9292_TCP_PORT +'/ocr';
   const data = { img_url: IP_ADDRESS, engine: "tesseract" };
 
-  console.log('hi?', id);
+  console.log('hi i am about to extract the image contents.', id);
   request({
     method: 'POST',
     url: OPEN_OCR_IP,
