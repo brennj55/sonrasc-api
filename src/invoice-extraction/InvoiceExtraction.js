@@ -2,12 +2,10 @@ let bcrypt = require('bcrypt-nodejs');
 let ImgCrop = require('easyimage');
 import Image from '../utils/Image';
 const Q = require('q');
-import { isEmpty, zipWith, zipObject,
-  groupBy, countBy, map, keys } from 'lodash';
+import _ from 'lodash';
 
 const extractInfoFromInvoice = (req, res) => {
   let filename = getHashedFileName();
-  //let outputFilename = getHashedFileName();
   let imageData = req.body.image;
 
   const objectsToExtract = getBoundaryDataFromInvoices(req.body.invoices);
@@ -16,9 +14,8 @@ const extractInfoFromInvoice = (req, res) => {
     .then(() => cropAllImageParts(objectsToExtract, filename))
     .then(() => extractAllCroppedImages(objectsToExtract))
     .then((data) => assoicateExtractedDataWithObjects(data, objectsToExtract))
-    .then(x => groupBy(x, 'type'))
-    .then(ys => getFrequentCroppings(ys))
-    .then(z => console.log(z));
+    .then(x => _.groupBy(x, 'type'))
+    .then(ys => getFrequentCroppings(ys));
 
   //for each boundary
     //cut the image and send to processing server.
@@ -45,7 +42,8 @@ const cropImage = (sourceFileName, outputFilename, boundary) => {
      cropwidth: boundary.width,
      cropheight: boundary.height,
      x: boundary.left,
-     y: boundary.top
+     y: boundary.top,
+    gravity: "NorthWest"
   }).then((image) => console.log('Resized and cropped: ' + image.width + ' x ' + image.height),
           (err) => console.log(err));
 };
@@ -73,7 +71,8 @@ const getBoundaryDataFromInvoices = (invoices) => {
 
     });
   });
-  boundaryObjects = boundaryObjects.filter(object => !isEmpty(object.boundary));
+  boundaryObjects = boundaryObjects.filter(object => !_.isEmpty(object.boundary));
+  console.log(boundaryObjects);
   return boundaryObjects;
 }
 
@@ -98,17 +97,19 @@ function extractAllCroppedImages(arr) {
 }
 
 function assoicateExtractedDataWithObjects(data, objs) {
-  return zipWith(data, objs, (text, obj) => {
+  return _.zipWith(data, objs, (text, obj) => {
     return Object.assign({}, obj, { text });
   });
 }
 
 function getFrequentCroppings(data) {
-  let counts = map(data, (values, key) => {
-    let count = countBy(values, 'text');
-    return { type: key, counts: count };
+  let getCountObjects = (count) => _.map(_.keys(count), countCandidate => { return {countCandidate, count: count[countCandidate] }});
+  let counts = _.map(data, (values, key) => {
+    let count = _.countBy(values, 'text');
+    return { type: key, count: getCountObjects(count) };
   });
-  return counts;
+  _.map(counts, y => console.log(y));
+  return _.map(counts, x => _.maxBy(x, 'count'));
 }
 
 export default { extractInfoFromInvoice };
