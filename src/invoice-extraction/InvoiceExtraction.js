@@ -2,31 +2,23 @@ let bcrypt = require('bcrypt-nodejs');
 let ImgCrop = require('easyimage');
 import Image from '../utils/Image';
 const Q = require('q');
+var deep = require("q-deep");
 import _ from 'lodash';
+import { extractDataObject } from '../process-images';
 
 const extractInfoFromInvoice = (req, res) => {
   let filename = getHashedFileName();
   let imageData = req.body.image;
-
   const objectsToExtract = getBoundaryDataFromInvoices(req.body.invoices);
-
-  Image.saveBlobAsImage(imageData, filename)
+  return Image.saveBlobAsImage(imageData, filename)
     .then(() => cropAllImageParts(objectsToExtract, filename))
     .then(() => extractAllCroppedImages(objectsToExtract))
     .then((data) => assoicateExtractedDataWithObjects(data, objectsToExtract))
-    .then(x => _.groupBy(x, 'type'))
-    .then(ys => getFrequentCroppings(ys));
-
-  //for each boundary
-    //cut the image and send to processing server.
-    //check the text.
-    //if its new, insert into data strcuture.
-    //else increase counter of existing candidate
-  //return the highest occuring candidate.
-  //saveImage(req.body.image);
+    .then(data => _.groupBy(data, 'type'))
+    .then(groups => getFrequentCroppings(groups))
+    .then(counts => parseCandidates(counts))
+    .then(data => res.json({data}));
 }
-
-// boundaries = {type: date, boundary: object, filename: string }
 
 const getHashedFileName = () => {
   let filename = bcrypt.hashSync(Math.random() + ' ' + new Date().toString(), bcrypt.genSaltSync(8), null);
@@ -47,7 +39,6 @@ const cropImage = (sourceFileName, outputFilename, boundary) => {
   }).then((image) => console.log('Resized and cropped: ' + image.width + ' x ' + image.height),
           (err) => console.log(err));
 };
-
 
 //get this directly from the db instead?
 const getBoundaryDataFromInvoices = (invoices) => {
@@ -102,14 +93,27 @@ function assoicateExtractedDataWithObjects(data, objs) {
   });
 }
 
+function parseCandidates(groups) {
+  let valuesWithContent = groups.map(group => Object.assign({}, group, { count: _.filter(group.count, count => count.countCandidate !== '' || count.countCandidate !== null)}));
+  let x = valuesWithContent.map(invoicePart => {
+    let promise = invoicePart.count.map(candidate => extractDataObject(invoicePart.type, candidate.countCandidate));
+    let object = Object.assign({}, invoicePart, { count: promise });
+    return Q.all(object);
+  });
+  return deep(x);
+}
+
 function getFrequentCroppings(data) {
   let getCountObjects = (count) => _.map(_.keys(count), countCandidate => { return {countCandidate, count: count[countCandidate] }});
   let counts = _.map(data, (values, key) => {
     let count = _.countBy(values, 'text');
     return { type: key, count: getCountObjects(count) };
   });
-  _.map(counts, y => console.log(y));
-  return _.map(counts, x => _.maxBy(x, 'count'));
+  return counts;
+}
+
+function filterParsedData(data) {
+  return data.map(y => Object.assign({}, y, { count: y.count.filter(x => x !== null) }));
 }
 
 export default { extractInfoFromInvoice };

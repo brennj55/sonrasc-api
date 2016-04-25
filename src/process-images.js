@@ -22,7 +22,7 @@ let createPOSTObject = (type, data) => {
   return {url, toSend};
 };
 
-let extractDataObject = (type, data) => {
+export let extractDataObject = (type, data) => {
   let httpPOST = createPOSTObject(type, data);
   return fetch(httpPOST.url, httpPOST.toSend)
     .then(res => res.json()).then(json => json.answer);
@@ -35,5 +35,6 @@ let extractText = (imgData, filename) => {
 };
 
 module.exports = {
-  extractText
+  extractText,
+  extractDataObject
 };
