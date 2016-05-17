@@ -6,7 +6,6 @@ const fsDeleteFile = Q.denodeify(fs.unlink);
 const request = Q.denodeify(require('request'));
 
 const saveBlobAsImage = (imageFromUser, filename) => {
-  console.log('saving image?', filename);
   console.log(imageFromUser.substr(0, 300));
   let data = imageFromUser.replace(/^data:image\/png;base64,/, '');
   data = data.replace(/^data:image\/jpeg;base64,/, '');
@@ -16,7 +15,6 @@ const saveBlobAsImage = (imageFromUser, filename) => {
 };
 
 const deleteFile = (filename) => {
-  console.log('look where i am', filename);
   return fsDeleteFile('/src/images/' + filename + '.jpg');
 }
 
@@ -26,7 +24,6 @@ const getImageContents = (id) => {
   const OPEN_OCR_IP = 'http://openocr:' + process.env.OPENOCR_1_PORT_9292_TCP_PORT +'/ocr';
   const data = { img_url: IP_ADDRESS, engine: "tesseract" };
 
-  console.log('hi i am about to extract the image contents.', id);
   request({
     method: 'POST',
     url: OPEN_OCR_IP,

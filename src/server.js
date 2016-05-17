@@ -35,10 +35,11 @@ server.listen(9005, () => {
 const getContents = (imgData, socket) => {
     fileID += 1;
     let currentFileID = fileID;
-    processing.extractText(imgData, currentFileID).then(data => {
-      socket.emit('extracted-text', data);
-    }
-  ).then(() => Image.deleteFile(currentFileID));
+    processing.extractText(imgData, currentFileID)
+      .then(data => {
+        socket.emit('extracted-text', data)
+      })
+      .then(() => Image.deleteFile(currentFileID));
 };
 
 io.on('connection', (socket) => {

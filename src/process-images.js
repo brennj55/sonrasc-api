@@ -25,7 +25,10 @@ let createPOSTObject = (type, data) => {
 export let extractDataObject = (type, data) => {
   let httpPOST = createPOSTObject(type, data);
   return fetch(httpPOST.url, httpPOST.toSend)
-    .then(res => res.json()).then(json => json.answer);
+    .then(res => res.json()).then(json => {
+      console.log(json);
+      return json.answer;
+    });
 };
 
 let extractText = (imgData, filename) => {
